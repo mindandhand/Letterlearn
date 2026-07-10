@@ -1,0 +1,48 @@
+.celebration-layer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.celebration-layer__piece {
+  position: absolute;
+  top: 40%;
+  font-size: 2.25rem;
+}
+
+.celebration-layer__rainbow,
+.celebration-layer__mascot,
+.celebration-layer__sticker {
+  /* Anchored near the top of the viewport, not dead-center, so it doesn't
+     land on top of the (also-centered) letter display. Framer Motion drives
+     its own `transform` for scale/rotate, so centering here uses
+     left/right/margin instead of translateX to avoid being overwritten. */
+  position: absolute;
+  top: max(72px, 8%);
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: fit-content;
+  font-size: clamp(3.5rem, 2.5rem + 5vw, 6rem);
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+}
+
+.celebration-layer__streak {
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-accent-3);
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: var(--text-large);
+  padding: var(--space-xs) var(--space-lg);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-soft);
+}

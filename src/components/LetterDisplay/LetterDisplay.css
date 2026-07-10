@@ -1,0 +1,48 @@
+.letter-display {
+  width: min(58vw, 320px);
+  height: min(58vw, 320px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-pop);
+  border: 6px solid var(--color-accent-2);
+  transition: border-color var(--duration-normal) var(--ease-out-expo),
+    box-shadow var(--duration-normal) var(--ease-out-expo);
+}
+
+.letter-display__char {
+  font-family: var(--font-heading);
+  font-size: var(--text-giant);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1;
+  user-select: none;
+}
+
+.letter-display--correct {
+  border-color: var(--color-success);
+  box-shadow: 0 0 0 12px rgba(67, 199, 140, 0.22), var(--shadow-pop);
+}
+
+.letter-display--incorrect {
+  border-color: var(--color-error);
+}
+
+.letter-display--placeholder {
+  width: min(58vw, 320px);
+  height: min(58vw, 320px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-soft);
+  border: 6px dashed var(--color-accent-2);
+}
+
+.letter-display--placeholder span {
+  font-family: var(--font-heading);
+  font-size: var(--text-giant);
+  color: var(--color-text-soft);
+}

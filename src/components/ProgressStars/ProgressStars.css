@@ -1,0 +1,44 @@
+.progress-stars-header {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 1.5rem;
+  color: var(--color-accent-3);
+}
+
+.progress-stars-header__count {
+  font-size: var(--text-base);
+  color: var(--color-text);
+  margin-left: var(--space-xs);
+  font-weight: 700;
+}
+
+.progress-stars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: var(--space-xs);
+}
+
+.progress-stars-grid__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+  font-size: 1.1rem;
+}
+
+.progress-stars-grid__letter {
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+.progress-stars-grid__cell--new {
+  opacity: 0.6;
+}
+
+.progress-stars-grid__cell--familiar {
+  background: var(--color-accent-3);
+}

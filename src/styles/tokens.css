@@ -1,0 +1,96 @@
+:root {
+  --font-heading: "Segoe UI Rounded", "SF Rounded", "Century Gothic", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --text-giant: clamp(6rem, 3rem + 14vw, 15rem);
+  --text-hero: clamp(2.25rem, 1.5rem + 3vw, 3.75rem);
+  --text-large: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+  --text-base: clamp(1.05rem, 0.95rem + 0.4vw, 1.25rem);
+
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1.25rem;
+  --space-lg: 2rem;
+  --space-xl: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+
+  --radius-sm: 1rem;
+  --radius-md: 1.5rem;
+  --radius-lg: 2.5rem;
+  --radius-pill: 999px;
+
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --shadow-soft: 0 12px 30px -10px rgba(30, 20, 60, 0.25);
+  --shadow-pop: 0 18px 40px -12px rgba(30, 20, 60, 0.35);
+
+  --focus-ring: 0 0 0 4px rgba(255, 255, 255, 0.8), 0 0 0 8px var(--color-accent);
+}
+
+[data-theme="rainbow"] {
+  --color-bg-start: #fff1f8;
+  --color-bg-mid: #eaf6ff;
+  --color-bg-end: #fff9e6;
+  --color-surface: #ffffff;
+  --color-surface-soft: #fff5fb;
+  --color-text: #3a2e5c;
+  --color-text-soft: #6c5f92;
+  --color-accent: #ff6fa5;
+  --color-accent-2: #6fc6ff;
+  --color-accent-3: #ffd166;
+  --color-success: #43c78c;
+  --color-error: #ff8a6d;
+}
+
+[data-theme="space"] {
+  --color-bg-start: #0b1030;
+  --color-bg-mid: #171b47;
+  --color-bg-end: #241454;
+  --color-surface: #1c2154;
+  --color-surface-soft: #262c66;
+  --color-text: #f2f0ff;
+  --color-text-soft: #b9b6e6;
+  --color-accent: #7c9dff;
+  --color-accent-2: #ff9de2;
+  --color-accent-3: #ffd166;
+  --color-success: #4be3a3;
+  --color-error: #ff7a7a;
+}
+
+[data-theme="forest"] {
+  --color-bg-start: #f3ead9;
+  --color-bg-mid: #e6f0da;
+  --color-bg-end: #f7f1e0;
+  --color-surface: #fffcf4;
+  --color-surface-soft: #f2ecd9;
+  --color-text: #3c3222;
+  --color-text-soft: #7a6d52;
+  --color-accent: #7bb45e;
+  --color-accent-2: #e0954f;
+  --color-accent-3: #f2c14e;
+  --color-success: #5fa96a;
+  --color-error: #e0703f;
+}
+
+[data-theme="ocean"] {
+  --color-bg-start: #e3f7fb;
+  --color-bg-mid: #cdeefb;
+  --color-bg-end: #e9fbf6;
+  --color-surface: #ffffff;
+  --color-surface-soft: #eafcff;
+  --color-text: #123a4b;
+  --color-text-soft: #3e7286;
+  --color-accent: #1fb6c9;
+  --color-accent-2: #3a86ff;
+  --color-accent-3: #ffd166;
+  --color-success: #2bb673;
+  --color-error: #ff7a5c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 1ms;
+    --duration-normal: 1ms;
+  }
+}
