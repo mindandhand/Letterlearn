@@ -28,7 +28,7 @@ export function WelcomePage({ settings, onChangeSettings, onStart, onOpenParentS
       </button>
 
       <main className="welcome-page__content">
-        <h1 className="welcome-page__title">ABC Keyboard Adventure</h1>
+        <h1 className="welcome-page__title">Letterlearn</h1>
         <p className="welcome-page__subtitle">Press, listen, and learn!</p>
 
         <button type="button" className="welcome-page__start" onClick={onStart}>

@@ -1,4 +1,4 @@
-# ABC Keyboard Adventure
+# Letterlearn
 
 A bright, no-ads keyboard game that teaches 4–5 year-olds the English alphabet:
 recognizing A–Z, telling uppercase from lowercase, finding letters on a real

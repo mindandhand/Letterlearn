@@ -1,4 +1,4 @@
-# ABC Keyboard Adventure — Progress Audit
+# Letterlearn — Progress Audit
 
 Last updated: 2026-07-10 14:24 (auto-maintained during this session)
 
