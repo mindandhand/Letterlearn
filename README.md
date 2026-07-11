@@ -8,6 +8,12 @@ never a penalty.
 Runs entirely in the browser. No backend, no accounts, no analytics, no child
 data ever leaves the device — everything is stored in `localStorage`.
 
+## Screenshots
+
+| Home | Free Play | Find the Letter |
+|------|-----------|-----------------|
+| ![Home screen showing four game mode cards](docs/screenshots/home.png) | ![Free Play mode showing the letter F and the word Fish](docs/screenshots/game-freeplay.png) | ![Find the Letter mode showing the letter A waiting for input](docs/screenshots/game-find-letter.png) |
+
 ## Quick start
 
 ```bash
@@ -99,7 +105,7 @@ for what's covered.
 ## Architecture & state management
 
 No routing library — `App.tsx` holds a single `page` state
-(`"welcome" | "mode-select" | "game"`) and swaps top-level page components.
+(`"welcome" | "game"`) and swaps top-level page components.
 Two pieces of persistent state live at the top and are threaded down as
 props: `useSettings()` (all `GameSettings`, backed by `useLocalStorage`) and
 `useProgress()` (per-letter `LetterProgress`, backed by `services/progressService.ts`).
@@ -123,7 +129,7 @@ src/
   components/   LetterDisplay, WordCard, ModeCard, CelebrationLayer,
                 SoundControls, ThemeSelector, ParentSettings (+ ParentGate),
                 ProgressStars
-  pages/        WelcomePage, ModeSelectPage, GamePage
+  pages/        WelcomePage, GamePage
   hooks/        useKeyboardInput, useSpeech, useGameSession,
                 useLocalStorage, useSettings, useProgress
   services/     audioService (playback), progressService (localStorage I/O)
