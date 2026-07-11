@@ -55,4 +55,4 @@ export interface CaseMatchQuestion {
   isUppercase: boolean;
 }
 
-export type Page = "welcome" | "mode-select" | "game";
+export type Page = "welcome" | "game";

@@ -67,3 +67,4 @@ export function getLetterData(letter: string): LetterData | undefined {
 }
 
 export const ALL_LETTER_KEYS = LETTERS.map((letter) => letter.uppercase);
+export const FIRST_LETTER_KEYS = ALL_LETTER_KEYS.slice(0, 3);

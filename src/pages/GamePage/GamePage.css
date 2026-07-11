@@ -45,10 +45,31 @@
   color: var(--color-text-soft);
 }
 
+.game-page__encouragement {
+  font-family: var(--font-heading);
+  font-size: var(--text-hero);
+  font-weight: 800;
+  color: var(--color-success);
+  animation: encouragement-pop 0.4s var(--ease-out-expo);
+}
+
+@keyframes encouragement-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 .game-page__hint {
   font-size: var(--text-large);
   font-weight: 700;
   color: var(--color-accent);
+  animation: hint-shake 0.4s ease;
+}
+
+@keyframes hint-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
 }
 
 .game-page__replay {

@@ -4,7 +4,6 @@ import { useProgress } from "./hooks/useProgress";
 import { audioService } from "./services/audioService";
 import type { GameMode, Page } from "./types/game";
 import { WelcomePage } from "./pages/WelcomePage/WelcomePage";
-import { ModeSelectPage } from "./pages/ModeSelectPage/ModeSelectPage";
 import { GamePage } from "./pages/GamePage/GamePage";
 import { ParentSettings } from "./components/ParentSettings/ParentSettings";
 import { useSpeech } from "./hooks/useSpeech";
@@ -67,13 +66,9 @@ function App() {
         <WelcomePage
           settings={settings}
           onChangeSettings={updateSettings}
-          onStart={() => setPage("mode-select")}
+          onSelectMode={handleSelectMode}
           onOpenParentSettings={() => setWelcomeSettingsOpen(true)}
         />
-      )}
-
-      {page === "mode-select" && (
-        <ModeSelectPage onSelectMode={handleSelectMode} onBack={() => setPage("welcome")} />
       )}
 
       {page === "game" && (
@@ -83,7 +78,7 @@ function App() {
           progress={progress}
           recordAttempt={recordAttempt}
           resetProgress={resetProgress}
-          onBack={() => setPage("mode-select")}
+          onBack={() => setPage("welcome")}
         />
       )}
 

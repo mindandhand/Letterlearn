@@ -2,33 +2,12 @@ import type { AccentId } from "../types/game";
 
 type EffectType = "correct" | "incorrect" | "click" | "celebration";
 
-interface SpeakOptions {
-  accent?: AccentId;
-  rate?: number;
-  pitch?: number;
-}
-
-const ACCENT_LANG: Record<AccentId, string> = {
-  us: "en-US",
-  gb: "en-GB",
-};
-
 const AUDIO_BASE = "/audio";
 
 const MUSIC_NOTES_HZ = [392.0, 440.0, 523.25, 587.33, 659.25];
 const MUSIC_NOTE_INTERVAL_MS = 900;
 const MUSIC_DEFAULT_GAIN = 0.05;
 const MUSIC_DUCK_GAIN = 0.015;
-
-// Chromium has a known timing bug where calling speechSynthesis.speak()
-// in the same tick as cancel() silently drops the utterance — it never
-// fires 'end' or 'error', so any code awaiting it hangs forever. A short
-// delay before speaking lets the cancel settle first.
-const SPEAK_QUEUE_DELAY_MS = 50;
-// Absolute safety net: if speech synthesis never fires end/error at all
-// (unsupported voice, OS-level TTS failure, other browser bugs), resolve
-// anyway so the game never gets stuck waiting on narration.
-const SPEAK_FAILSAFE_TIMEOUT_MS = 4000;
 
 function getAudioContextClass(): typeof AudioContext | undefined {
   if (typeof window === "undefined") {
@@ -38,13 +17,9 @@ function getAudioContextClass(): typeof AudioContext | undefined {
 }
 
 /**
- * Plays pre-recorded voice clips (public/audio/{accent}/...) for every
- * letter and word, generated once via scripts/generate-audio.sh. Real
- * audio files are far more reliable than live SpeechSynthesis (which has
- * inconsistent voice availability and browser timing bugs — see the
- * cancel/speak race handled below) and sound better to a child. Live
- * speech synthesis is kept only as an automatic fallback for instructional
- * phrases and for the rare case a clip fails to load.
+ * Plays pre-recorded voice clips from public/audio/{accent}/...
+ * SpeechSynthesis is intentionally not used as a fallback: missing clips
+ * should be replaced with real recordings rather than a robotic voice.
  */
 class AudioService {
   private audioContext: AudioContext | undefined;
@@ -53,9 +28,9 @@ class AudioService {
   private musicNoteIndex = 0;
   private volume = 0.8;
   private speaking = false;
-  private speechToken = 0;
   private currentClip: HTMLAudioElement | undefined;
   private playToken = 0;
+  private missingClipWarnings = new Set<string>();
 
   setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
@@ -70,7 +45,7 @@ class AudioService {
   }
 
   isSpeechSupported(): boolean {
-    return typeof window !== "undefined" && "speechSynthesis" in window;
+    return typeof window !== "undefined" && typeof Audio !== "undefined";
   }
 
   private ensureAudioContext(): AudioContext | undefined {
@@ -94,7 +69,6 @@ class AudioService {
   }
 
   cancelSpeech(): void {
-    this.speechToken += 1;
     this.playToken += 1;
     if (this.currentClip) {
       this.currentClip.onended = null;
@@ -102,48 +76,44 @@ class AudioService {
       this.currentClip.pause();
       this.currentClip = undefined;
     }
-    if (this.isSpeechSupported()) {
-      window.speechSynthesis.cancel();
-    }
     this.speaking = false;
     this.restoreMusicGain();
   }
 
   playLetterSound(letter: string, accent: AccentId): Promise<void> {
-    // Lowercase fallback text: some speech engines read a bare isolated
-    // uppercase letter as "Capital X" instead of just the letter name.
-    return this.playClip(`letter-${letter.toUpperCase()}`, accent, letter.toLowerCase());
+    return this.playClip(`letter-${letter.toUpperCase()}`, accent);
   }
 
-  playWordSound(word: string, audioSlug: string, accent: AccentId): Promise<void> {
-    return this.playClip(`word-${audioSlug}`, accent, word);
+  playPhonicsSound(letter: string, accent: AccentId): Promise<void> {
+    return this.playClip(`sound-${letter.toUpperCase()}`, accent);
+  }
+
+  playCorrectSound(letter: string, accent: AccentId): Promise<void> {
+    return this.playClip(`correct-${letter.toUpperCase()}`, accent);
+  }
+
+  playHintSound(letter: string, accent: AccentId): Promise<void> {
+    return this.playClip(`hint-${letter.toUpperCase()}`, accent);
+  }
+
+  playWordSound(_word: string, audioSlug: string, accent: AccentId): Promise<void> {
+    return this.playClip(`word-${audioSlug}`, accent);
   }
 
   playPromptSound(letter: string, accent: AccentId): Promise<void> {
-    return this.playClip(`prompt-${letter.toUpperCase()}`, accent, `Press ${letter}.`, { rate: 0.9 });
+    return this.playClip(`prompt-${letter.toUpperCase()}`, accent);
   }
 
   playPairSound(letter: string, accent: AccentId): Promise<void> {
     const upper = letter.toUpperCase();
-    return this.playClip(
-      `pair-${upper}`,
-      accent,
-      `Uppercase ${upper}, lowercase ${upper.toLowerCase()}.`,
-      { rate: 0.9 },
-    );
+    return this.playClip(`pair-${upper}`, accent);
   }
 
   playTestSound(accent: AccentId): Promise<void> {
-    return this.playClip("test-sound", accent, "Hello! This is how I sound.");
+    return this.playClip("test-sound", accent);
   }
 
-  /** Plays a pre-recorded clip, falling back to speech synthesis if it fails to load. */
-  private playClip(
-    clipName: string,
-    accent: AccentId,
-    fallbackText: string,
-    fallbackOptions: SpeakOptions = {},
-  ): Promise<void> {
+  private playClip(clipName: string, accent: AccentId): Promise<void> {
     if (typeof window === "undefined") {
       return Promise.resolve();
     }
@@ -169,8 +139,9 @@ class AudioService {
         resolve();
       };
 
-      const fallbackToSynthesis = (): void => {
-        void this.speakWithSynthesis(fallbackText, { accent, ...fallbackOptions }).then(finish);
+      const handleMissingClip = (): void => {
+        this.warnMissingClip(`${accent}/${clipName}.m4a`);
+        finish();
       };
 
       const audio = new Audio(`${AUDIO_BASE}/${accent}/${clipName}.m4a`);
@@ -180,61 +151,18 @@ class AudioService {
       this.duckMusicGain();
 
       audio.onended = finish;
-      audio.onerror = fallbackToSynthesis;
+      audio.onerror = handleMissingClip;
 
-      audio.play().catch(fallbackToSynthesis);
+      audio.play().catch(handleMissingClip);
     });
   }
 
-  private speakWithSynthesis(text: string, options: SpeakOptions = {}): Promise<void> {
-    if (!this.isSpeechSupported()) {
-      return Promise.resolve();
+  private warnMissingClip(path: string): void {
+    if (!import.meta.env.DEV || this.missingClipWarnings.has(path)) {
+      return;
     }
-    window.speechSynthesis.cancel();
-    this.speechToken += 1;
-    const token = this.speechToken;
-
-    return new Promise((resolve) => {
-      let settled = false;
-      let failsafeTimer: ReturnType<typeof setTimeout> | undefined;
-
-      const finish = (): void => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(failsafeTimer);
-        this.speaking = false;
-        this.restoreMusicGain();
-        resolve();
-      };
-
-      setTimeout(() => {
-        // A newer speak()/cancelSpeech() call superseded this one while it
-        // was waiting out the queue delay — drop it instead of talking over
-        // the new utterance.
-        if (token !== this.speechToken) {
-          finish();
-          return;
-        }
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = ACCENT_LANG[options.accent ?? "us"];
-        utterance.rate = options.rate ?? 0.9;
-        utterance.pitch = options.pitch ?? 1.05;
-        utterance.volume = this.volume;
-
-        this.speaking = true;
-        this.duckMusicGain();
-        utterance.onend = finish;
-        utterance.onerror = finish;
-        failsafeTimer = setTimeout(finish, SPEAK_FAILSAFE_TIMEOUT_MS);
-
-        try {
-          window.speechSynthesis.speak(utterance);
-        } catch {
-          finish();
-        }
-      }, SPEAK_QUEUE_DELAY_MS);
-    });
+    this.missingClipWarnings.add(path);
+    console.warn(`Missing real voice clip: ${AUDIO_BASE}/${path}`);
   }
 
   playEffect(type: EffectType): void {
@@ -338,4 +266,4 @@ class AudioService {
 }
 
 export const audioService = new AudioService();
-export type { EffectType, SpeakOptions };
+export type { EffectType };

@@ -6,6 +6,9 @@ import type { GameSettings } from "../../types/game";
 vi.mock("../../services/audioService", () => ({
   audioService: {
     playLetterSound: vi.fn().mockResolvedValue(undefined),
+    playPhonicsSound: vi.fn().mockResolvedValue(undefined),
+    playCorrectSound: vi.fn().mockResolvedValue(undefined),
+    playHintSound: vi.fn().mockResolvedValue(undefined),
     playWordSound: vi.fn().mockResolvedValue(undefined),
     playPromptSound: vi.fn().mockResolvedValue(undefined),
     playPairSound: vi.fn().mockResolvedValue(undefined),

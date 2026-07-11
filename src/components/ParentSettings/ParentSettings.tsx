@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ALL_LETTER_KEYS } from "../../data/letters";
+import { ALL_LETTER_KEYS, FIRST_LETTER_KEYS } from "../../data/letters";
 import type { GameMode, GameSettings, LetterCaseMode, ProgressRecord, QuestionCount } from "../../types/game";
 import { getMostMissedLetters } from "../../services/progressService";
 import { SoundControls } from "../SoundControls/SoundControls";
@@ -19,6 +19,7 @@ interface ParentSettingsProps {
 }
 
 const LETTER_RANGES: Array<{ label: string; letters: string[] }> = [
+  { label: "First letters A-C", letters: FIRST_LETTER_KEYS },
   { label: "A-Z (all)", letters: ALL_LETTER_KEYS },
   { label: "A-F", letters: ALL_LETTER_KEYS.slice(0, 6) },
   { label: "G-L", letters: ALL_LETTER_KEYS.slice(6, 12) },

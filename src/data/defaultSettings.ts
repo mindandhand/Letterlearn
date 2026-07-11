@@ -1,10 +1,10 @@
 import type { GameSettings } from "../types/game";
-import { ALL_LETTER_KEYS } from "./letters";
+import { FIRST_LETTER_KEYS } from "./letters";
 
 export const DEFAULT_SETTINGS: GameSettings = {
   mode: "free-play",
   caseMode: "mixed",
-  enabledLetters: ALL_LETTER_KEYS,
+  enabledLetters: FIRST_LETTER_KEYS,
   soundEnabled: true,
   letterSpeechEnabled: true,
   wordSpeechEnabled: true,

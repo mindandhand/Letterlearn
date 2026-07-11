@@ -108,17 +108,12 @@ export function useGameSession(settings: GameSettings, progressApi: ProgressApi)
       if (current.mode === "case-match") {
         await speech.playPairSound(letter);
       } else {
-        await speech.playLetterSound(letter);
+        await speech.playCorrectSound(letter);
       }
       if (isStale(generation)) return;
 
       if (current.mode !== "case-match" && (current.showWords || current.wordSpeechEnabled)) {
         setPhase("showingWord");
-        const wordData = getLetterData(letter);
-        if (wordData) {
-          await speech.playWordSound(wordData.word, wordData.audioSlug);
-          if (isStale(generation)) return;
-        }
       }
 
       setPhase("celebration");
@@ -159,6 +154,7 @@ export function useGameSession(settings: GameSettings, progressApi: ProgressApi)
       setHint(pickRandom(GENTLE_HINTS));
       progressRef.current.recordAttempt(letter, false);
       setStreak(0);
+      void speech.playHintSound(letter);
 
       setTimeout(() => {
         // A correct answer may have already landed while this timer was
@@ -182,6 +178,8 @@ export function useGameSession(settings: GameSettings, progressApi: ProgressApi)
         speech.playEffect("click");
         const generation = generationRef.current;
         void speech.playLetterSound(pressed).then(async () => {
+          if (isStale(generation)) return;
+          await speech.playPhonicsSound(pressed);
           if (isStale(generation)) return;
           const wordData = getLetterData(pressed);
           if (wordData) {

@@ -1,18 +1,18 @@
 export const ENCOURAGEMENTS: string[] = [
-  "Great job!",
-  "Amazing!",
-  "Well done!",
-  "You got it!",
-  "Awesome!",
-  "Fantastic!",
-  "Super!",
-  "Keep going!",
+  "🌸 Great job! 👏",
+  "🌺 Amazing! 👏",
+  "🌻 Well done! 👏",
+  "🌷 You got it! 👏",
+  "🌸 Awesome! 👏",
+  "🌺 Fantastic! 👏",
+  "🌻 Super! 👏",
+  "🌷 Keep going! 👏",
 ];
 
 export const GENTLE_HINTS: string[] = [
-  "Try again!",
-  "Almost!",
-  "You can do it!",
+  "💪 Try again!",
+  "🌟 Almost there!",
+  "😊 You can do it!",
 ];
 
 export type CelebrationAnimationId =

@@ -128,6 +128,10 @@ export function GamePage({ settings, onChangeSettings, progress, recordAttempt, 
           </button>
         )}
 
+        {session.phase === "celebration" && session.encouragement && (
+          <p className="game-page__encouragement">{session.encouragement}</p>
+        )}
+
         {session.hint && session.phase === "incorrectFeedback" && (
           <p className="game-page__hint">{session.hint}</p>
         )}

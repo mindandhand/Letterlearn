@@ -1,11 +1,15 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useGameSession } from "./useGameSession";
+import { audioService } from "../services/audioService";
 import type { GameSettings, ProgressRecord } from "../types/game";
 
 vi.mock("../services/audioService", () => ({
   audioService: {
     playLetterSound: vi.fn().mockResolvedValue(undefined),
+    playPhonicsSound: vi.fn().mockResolvedValue(undefined),
+    playCorrectSound: vi.fn().mockResolvedValue(undefined),
+    playHintSound: vi.fn().mockResolvedValue(undefined),
     playWordSound: vi.fn().mockResolvedValue(undefined),
     playPromptSound: vi.fn().mockResolvedValue(undefined),
     playPairSound: vi.fn().mockResolvedValue(undefined),
@@ -64,6 +68,7 @@ describe("useGameSession", () => {
     expect(progressApi.recordAttempt).toHaveBeenCalledWith(target, true);
 
     await waitFor(() => expect(result.current.phase).toBe("celebration"));
+    expect(audioService.playCorrectSound).toHaveBeenCalledWith(target, "us");
   });
 
   it("does not advance to a new letter when the wrong key is pressed, and keeps the question available", async () => {
@@ -81,6 +86,7 @@ describe("useGameSession", () => {
     expect(result.current.phase).toBe("incorrectFeedback");
     expect(progressApi.recordAttempt).toHaveBeenCalledWith(target, false);
     expect(result.current.currentLetter).toBe(target);
+    expect(audioService.playHintSound).toHaveBeenCalledWith(target, "us");
 
     await waitFor(() => expect(result.current.phase).toBe("waitingForInput"));
     expect(result.current.currentLetter).toBe(target);

@@ -27,6 +27,30 @@ export function useSpeech(settings: GameSettings) {
     return audioService.playWordSound(word, audioSlug, current.accent);
   }, []);
 
+  const playPhonicsSound = useCallback((letter: string): Promise<void> => {
+    const current = settingsRef.current;
+    if (!current.soundEnabled || !current.letterSpeechEnabled) {
+      return Promise.resolve();
+    }
+    return audioService.playPhonicsSound(letter, current.accent);
+  }, []);
+
+  const playCorrectSound = useCallback((letter: string): Promise<void> => {
+    const current = settingsRef.current;
+    if (!current.soundEnabled || !current.letterSpeechEnabled) {
+      return Promise.resolve();
+    }
+    return audioService.playCorrectSound(letter, current.accent);
+  }, []);
+
+  const playHintSound = useCallback((letter: string): Promise<void> => {
+    const current = settingsRef.current;
+    if (!current.soundEnabled || !current.letterSpeechEnabled) {
+      return Promise.resolve();
+    }
+    return audioService.playHintSound(letter, current.accent);
+  }, []);
+
   const playPromptSound = useCallback((letter: string): Promise<void> => {
     const current = settingsRef.current;
     if (!current.soundEnabled || !current.letterSpeechEnabled) {
@@ -69,6 +93,9 @@ export function useSpeech(settings: GameSettings) {
 
   return {
     playLetterSound,
+    playPhonicsSound,
+    playCorrectSound,
+    playHintSound,
     playWordSound,
     playPromptSound,
     playPairSound,

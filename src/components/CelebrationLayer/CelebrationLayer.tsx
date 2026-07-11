@@ -10,7 +10,7 @@ interface CelebrationLayerProps {
   reducedMotion: boolean;
 }
 
-const CONFETTI_EMOJI = ["🎉", "✨", "🎊", "⭐"];
+const CONFETTI_EMOJI = ["🌸", "🌺", "🌻", "🌷", "👏", "✨"];
 const PIECE_COUNT = 8;
 
 interface Piece {

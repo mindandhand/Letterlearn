@@ -7,6 +7,9 @@ import type { GameSettings } from "../types/game";
 vi.mock("../services/audioService", () => ({
   audioService: {
     playLetterSound: vi.fn().mockResolvedValue(undefined),
+    playPhonicsSound: vi.fn().mockResolvedValue(undefined),
+    playCorrectSound: vi.fn().mockResolvedValue(undefined),
+    playHintSound: vi.fn().mockResolvedValue(undefined),
     playWordSound: vi.fn().mockResolvedValue(undefined),
     playPromptSound: vi.fn().mockResolvedValue(undefined),
     playPairSound: vi.fn().mockResolvedValue(undefined),
@@ -47,7 +50,13 @@ describe("useSpeech", () => {
   it("calls audioService when sound is enabled", async () => {
     const { result } = renderHook(() => useSpeech(baseSettings));
     await result.current.playLetterSound("A");
+    await result.current.playPhonicsSound("A");
+    await result.current.playCorrectSound("A");
+    await result.current.playHintSound("A");
     expect(audioService.playLetterSound).toHaveBeenCalledWith("A", "us");
+    expect(audioService.playPhonicsSound).toHaveBeenCalledWith("A", "us");
+    expect(audioService.playCorrectSound).toHaveBeenCalledWith("A", "us");
+    expect(audioService.playHintSound).toHaveBeenCalledWith("A", "us");
   });
 
   it("does not call audioService for letter/word sounds when the master sound switch is off", async () => {
@@ -55,6 +64,9 @@ describe("useSpeech", () => {
     const { result } = renderHook(() => useSpeech(settings));
 
     await result.current.playLetterSound("A");
+    await result.current.playPhonicsSound("A");
+    await result.current.playCorrectSound("A");
+    await result.current.playHintSound("A");
     await result.current.playWordSound("Apple", "apple");
     await result.current.playPromptSound("A");
     await result.current.playPairSound("A");
@@ -62,6 +74,9 @@ describe("useSpeech", () => {
     result.current.playEffect("correct");
 
     expect(audioService.playLetterSound).not.toHaveBeenCalled();
+    expect(audioService.playPhonicsSound).not.toHaveBeenCalled();
+    expect(audioService.playCorrectSound).not.toHaveBeenCalled();
+    expect(audioService.playHintSound).not.toHaveBeenCalled();
     expect(audioService.playWordSound).not.toHaveBeenCalled();
     expect(audioService.playPromptSound).not.toHaveBeenCalled();
     expect(audioService.playPairSound).not.toHaveBeenCalled();
@@ -74,7 +89,13 @@ describe("useSpeech", () => {
     const { result } = renderHook(() => useSpeech(settings));
 
     await result.current.playLetterSound("A");
+    await result.current.playPhonicsSound("A");
+    await result.current.playCorrectSound("A");
+    await result.current.playHintSound("A");
 
     expect(audioService.playLetterSound).not.toHaveBeenCalled();
+    expect(audioService.playPhonicsSound).not.toHaveBeenCalled();
+    expect(audioService.playCorrectSound).not.toHaveBeenCalled();
+    expect(audioService.playHintSound).not.toHaveBeenCalled();
   });
 });
