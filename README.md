@@ -1,5 +1,7 @@
 # Letterlearn
 
+[中文文档](README.zh.md)
+
 A bright, no-ads keyboard game that teaches 4–5 year-olds the English alphabet:
 recognizing A–Z, telling uppercase from lowercase, finding letters on a real
 keyboard, and hearing correct pronunciation — all backed by a local high-five,
