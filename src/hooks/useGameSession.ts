@@ -10,6 +10,7 @@ import { useSpeech } from "./useSpeech";
 
 const CELEBRATION_DURATION_MS = 1600;
 const INCORRECT_RESET_DELAY_MS = 700;
+const INCORRECT_COOLDOWN_MS = 800;
 
 interface ProgressApi {
   progress: ProgressRecord;
@@ -50,6 +51,7 @@ export function useGameSession(settings: GameSettings, progressApi: ProgressApi)
   const [isSessionComplete, setIsSessionComplete] = useState(false);
 
   const lastLetterRef = useRef<string | null>(null);
+  const lastIncorrectTimeRef = useRef(0);
   const cycleIndexRef = useRef(0);
   const hasScoredRef = useRef(false);
   const generationRef = useRef(0);
@@ -148,6 +150,9 @@ export function useGameSession(settings: GameSettings, progressApi: ProgressApi)
 
   const handleIncorrect = useCallback(
     (letter: string) => {
+      const now = Date.now();
+      if (now - lastIncorrectTimeRef.current < INCORRECT_COOLDOWN_MS) return;
+      lastIncorrectTimeRef.current = now;
       const generation = generationRef.current;
       speech.playEffect("incorrect");
       setPhase("incorrectFeedback");
@@ -172,6 +177,7 @@ export function useGameSession(settings: GameSettings, progressApi: ProgressApi)
       const current = settingsRef.current;
 
       if (current.mode === "free-play") {
+        generationRef.current += 1;
         setCurrentLetter(pressed);
         setDisplayUppercase(pickIsUppercase(current.caseMode));
         setPhase("showingWord");

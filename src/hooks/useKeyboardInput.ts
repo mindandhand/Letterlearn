@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 
+const COOLDOWN_MS = 50;
+
 interface UseKeyboardInputOptions {
   /** When false, the listener is removed entirely (e.g. while a settings modal is open). */
   enabled: boolean;
@@ -17,6 +19,7 @@ const IGNORED_TARGET_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 export function useKeyboardInput({ enabled, onLetterPress }: UseKeyboardInputOptions): void {
   const callbackRef = useRef(onLetterPress);
   callbackRef.current = onLetterPress;
+  const lastPressTimeRef = useRef(0);
 
   useEffect(() => {
     if (!enabled) {
@@ -27,6 +30,11 @@ export function useKeyboardInput({ enabled, onLetterPress }: UseKeyboardInputOpt
       if (event.repeat) {
         return;
       }
+      const now = Date.now();
+      if (now - lastPressTimeRef.current < COOLDOWN_MS) {
+        return;
+      }
+      lastPressTimeRef.current = now;
       if (event.ctrlKey || event.altKey || event.metaKey) {
         return;
       }
