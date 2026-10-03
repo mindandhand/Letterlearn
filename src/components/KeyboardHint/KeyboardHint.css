@@ -1,0 +1,76 @@
+.keyboard-hint {
+  width: min(100%, 440px);
+  padding: 10px 12px 22px;
+  border: 2px solid var(--color-accent-2);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+  box-shadow: var(--shadow-soft);
+}
+
+.keyboard-hint__symbol {
+  display: block;
+  font-size: 1.6rem;
+  line-height: 1;
+  margin-bottom: 12px;
+  color: var(--color-text-soft);
+}
+
+.keyboard-hint__keys {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.keyboard-hint__row {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.keyboard-hint__row--1 { padding-left: 12px; }
+.keyboard-hint__row--2 { padding-left: 28px; }
+
+.keyboard-hint__key {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(20px, 6vw, 34px);
+  height: 32px;
+  flex-shrink: 1;
+  border-radius: 7px;
+  background: var(--color-surface);
+  color: var(--color-text-soft);
+  border: 1px solid currentColor;
+  border-bottom-width: 3px;
+  font-family: var(--font-heading);
+  font-size: clamp(0.75rem, 2.6vw, 1rem);
+  font-weight: 700;
+}
+
+.keyboard-hint__key[data-highlighted="true"] {
+  background: #ffd166;
+  color: #3a2e5c;
+  outline: 3px solid #e99518;
+  outline-offset: 2px;
+  z-index: 1;
+  animation: keyboard-key-glow 1.4s ease-in-out infinite;
+}
+
+.keyboard-hint__key[data-highlighted="true"]::after {
+  content: "☝";
+  position: absolute;
+  top: 20px;
+  right: -9px;
+  font-size: 26px;
+  line-height: 1;
+}
+
+@keyframes keyboard-key-glow {
+  50% { box-shadow: 0 0 0 7px rgb(255 209 102 / 30%); }
+}
+
+.keyboard-hint--still .keyboard-hint__key { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .keyboard-hint__key[data-highlighted="true"] { animation: none; }
+}

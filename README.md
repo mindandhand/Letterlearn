@@ -5,7 +5,8 @@
 A bright, no-ads keyboard game that teaches 4–5 year-olds the English alphabet:
 recognizing A–Z, telling uppercase from lowercase, finding letters on a real
 keyboard, and hearing correct pronunciation — all backed by a local high-five,
-never a penalty.
+never a penalty. It also supports digits 0–9 with English number names and
+countable dot pictures.
 
 Runs entirely in the browser. No backend, no accounts, no analytics, no child
 data ever leaves the device — everything is stored in `localStorage`.
@@ -42,8 +43,31 @@ for what's covered.
 
 ## Implemented features
 
+- **Learning content choice** on the home screen: Letters, Numbers, or Mixed. Numbers
+  supports Free Play, Find the Number, and Listen and Find; Case Match is for
+  letters only. Press a digit on the main keyboard or NumLock-enabled numpad
+  to hear its name once and see its English word and quantity (zero has an
+  empty dot tray). Click the digit or word card to hear it again.
+- **Mixed learning** combines letters and digits in Free Play, Find the Key,
+  and Listen and Find. Random questions alternate categories and keep weighted
+  selection within each; sequential questions interleave the configured ranges
+  (A, 0, B, 1, then any remaining items). Letter case only affects letters.
+  Letter playback includes the word; digits are spoken once. Both ranges can
+  be edited together in parent settings and reuse their existing progress.
+- **Home case selector**: Uppercase ABC, Lowercase abc, or Mixed Aa. New users
+  start with uppercase; existing saved preferences are preserved.
+- **Separate practice ranges** for letters and numbers, with number presets
+  0–9, 0–5, 6–9 and custom selections in parent settings. Ranges control
+  questions; Free Play accepts every key in the selected content type.
+  Existing settings and letter progress remain compatible.
+- **Non-reading answer feedback**: a green check and gold star for correct
+  answers, an orange retry icon and gentle shake for misses, with distinct
+  short sounds. Two accepted misses reveal a physical-keyboard location guide.
+  A correct answer hides the guide immediately; earned stars are never removed
+  for a miss. Icons remain visible with sound or motion disabled.
+
 - **Four game modes**, each independently playable from the mode-select screen:
-  - **Free Play** — press any letter, hear it, see its word and emoji.
+  - **Free Play** — press any letter to hear its name, then its word after a short pause. The letter, word and picture stay visible; click the letter or word card to hear it again.
   - **Find the Letter** — hear "Press A", find it on the keyboard; gentle retry
     on a miss, no penalty.
   - **Listen and Find** — the letter is hidden; listen (with a repeat button)
@@ -90,12 +114,10 @@ for what's covered.
   recordings. Swap in real recordings by replacing the files in
   `public/audio/{us,gb}/` with same-named `.m4a` files (or edit `AUDIO_BASE`
   in `audioService.ts` to point elsewhere).
-- If a clip fails to load (e.g. a missing file, or you deploy without the
-  `public/audio` folder), the game automatically falls back to the browser's
-  `SpeechSynthesis` API. Voice availability and quality vary by browser/OS in
-  that fallback path; some browsers may have no installed voices at all, in
-  which case the game silently continues with no audio rather than blocking
-  play.
+- If a clip fails to load or play, the game continues silently. There is no
+  browser speech-synthesis fallback; deploy the `public/audio` assets with
+  the app. Listen and Find reveals the target when sound or letter speech
+  is disabled, or volume is zero.
 - Autoplay policies mean background music never starts on page load — it
   waits for the first click or key press, per browser requirements.
 - Designed and tested for desktop/tablet screens with a physical keyboard;
@@ -156,23 +178,35 @@ uppercase/lowercase pairing phrase. These are generated once by
 static assets — so the shipped app never depends on the browser's live
 `SpeechSynthesis` API for its core content.
 
-`SpeechSynthesis` is kept only as an automatic fallback: if a clip's
-`<audio>` element fails to load or play (missing file, unsupported format,
-autoplay block), `audioService` transparently retries with a synthesized
-utterance using the same text. If the browser has no speech synthesis
-support at all, that fallback resolves immediately and the game continues
-silently — sound is always additive, never a blocker to play.
+Learning playback uses separate letter-name and word clips, respecting each
+speech setting independently. Free Play leaves a short pause between the
+letter and word; correct answers in Find the Letter and Listen and Find
+read only the word. Phonics and long spoken feedback are not played in
+these flows. Incorrect answers use a light effect and visual hint.
 
-Playback is serialized: starting a new clip or utterance cancels whatever
-was still playing (a monotonic token guards against a slow-finishing old
-callback stomping on a newer one), so rapid key presses never overlap two
-voices. Background music, when enabled, automatically ducks its volume
+There is no `SpeechSynthesis` fallback. Failed clips resolve without blocking
+play. Cancelled clips also settle their pending playback tasks, so replay
+cannot strand an answer midway through feedback. Opening parent settings
+pauses the learning sequence and stops its speech.
+
+Playback is serialized: starting a new clip settles and cancels the previous
+clip. Completed or cancelled callbacks are ignored, so rapid key presses
+never overlap two voices. Background music, when enabled, automatically ducks its volume
 while any speech or clip is playing and restores it afterward.
 
 To regenerate the audio (e.g. after adding a new word), run on macOS:
 
 ```bash
 ./scripts/generate-audio.sh
+```
+
+Number clips have a separate generator using the Volcengine configuration in
+`.env`; it does not modify alphabet recordings:
+
+```bash
+npm run audio:numbers -- --dry-run           # show plans without credentials
+npm run audio:numbers                        # generate missing US/GB digit clips
+npm run audio:numbers -- --accent us --force  # regenerate US digit clips
 ```
 
 ## Testing

@@ -22,6 +22,8 @@ vi.mock("../services/audioService", () => ({
 }));
 
 const baseSettings: GameSettings = {
+  contentType: "letters",
+  enabledNumbers: ["0", "1", "2"],
   mode: "free-play",
   caseMode: "mixed",
   enabledLetters: ["A", "B"],

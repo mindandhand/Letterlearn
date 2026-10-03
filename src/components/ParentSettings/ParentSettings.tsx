@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ALL_LETTER_KEYS, FIRST_LETTER_KEYS } from "../../data/letters";
+import { ALL_NUMBER_KEYS } from "../../data/numbers";
 import type { GameMode, GameSettings, LetterCaseMode, ProgressRecord, QuestionCount } from "../../types/game";
 import { getMostMissedLetters } from "../../services/progressService";
 import { SoundControls } from "../SoundControls/SoundControls";
@@ -37,7 +38,7 @@ const MODE_LABELS: Record<GameMode, string> = {
 const CASE_LABELS: Record<LetterCaseMode, string> = {
   uppercase: "Uppercase only",
   lowercase: "Lowercase only",
-  mixed: "Mixed",
+  mixed: "Mixed Aa",
 };
 
 export function ParentSettings({
@@ -77,15 +78,23 @@ export function ParentSettings({
     return null;
   }
 
-  function toggleLetter(letter: string): void {
-    const isEnabled = settings.enabledLetters.includes(letter);
-    if (isEnabled) {
-      if (settings.enabledLetters.length <= 1) {
-        return;
-      }
-      onChange({ enabledLetters: settings.enabledLetters.filter((item) => item !== letter) });
+  const isNumbers = settings.contentType === "numbers";
+  const isMixed = settings.contentType === "mixed";
+  const contentKeys = isMixed ? [...ALL_LETTER_KEYS, ...ALL_NUMBER_KEYS] : isNumbers ? ALL_NUMBER_KEYS : ALL_LETTER_KEYS;
+  const rangeGroups = [
+    ...(!isNumbers ? [{ title: "Letter range", field: "enabledLetters" as const, keys: ALL_LETTER_KEYS, ranges: LETTER_RANGES }] : []),
+    ...(isNumbers || isMixed ? [{ title: "Number range", field: "enabledNumbers" as const, keys: ALL_NUMBER_KEYS, ranges: [
+      { label: "0–9 (all)", letters: ALL_NUMBER_KEYS },
+      { label: "0–5", letters: ALL_NUMBER_KEYS.slice(0, 6) },
+      { label: "6–9", letters: ALL_NUMBER_KEYS.slice(6) },
+    ] }] : []),
+  ];
+  function toggleKey(key: string, field: "enabledLetters" | "enabledNumbers"): void {
+    const enabled = settings[field];
+    if (enabled.includes(key)) {
+      if (enabled.length > 1) onChange({ [field]: enabled.filter((item) => item !== key) });
     } else {
-      onChange({ enabledLetters: [...settings.enabledLetters, letter] });
+      onChange({ [field]: [...enabled, key] });
     }
   }
 
@@ -96,7 +105,7 @@ export function ParentSettings({
     }
   }
 
-  const mostMissed = getMostMissedLetters(progress);
+  const mostMissed = getMostMissedLetters(Object.fromEntries(Object.entries(progress).filter(([key]) => contentKeys.includes(key))));
 
   return (
     <div className="parent-settings-overlay">
@@ -118,24 +127,36 @@ export function ParentSettings({
             <h2 className="parent-settings__title">Parent Settings</h2>
 
             <section className="parent-settings__section">
+              <h3>Learning content</h3>
+              <div className="parent-settings__pills" role="group" aria-label="Choose learning content">
+                {(["letters", "numbers", "mixed"] as const).map((contentType) => (
+                  <button type="button" key={contentType} aria-pressed={settings.contentType === contentType}
+                    className={`parent-settings__pill ${settings.contentType === contentType ? "parent-settings__pill--active" : ""}`}
+                    onClick={() => onChange({ contentType, ...(contentType !== "letters" && settings.mode === "case-match" ? { mode: "find-letter" as const } : {}) })}>
+                    {contentType === "letters" ? "Letters" : contentType === "numbers" ? "Numbers" : "Mixed"}
+                  </button>
+                ))}
+              </div>
+            </section>
+            <section className="parent-settings__section">
               <h3>Practice mode</h3>
               <div className="parent-settings__pills">
-                {(Object.keys(MODE_LABELS) as GameMode[]).map((mode) => (
+                {(Object.keys(MODE_LABELS) as GameMode[]).filter((mode) => settings.contentType === "letters" || mode !== "case-match").map((mode) => (
                   <button
                     key={mode}
                     type="button"
                     className={`parent-settings__pill ${settings.mode === mode ? "parent-settings__pill--active" : ""}`}
                     onClick={() => onChange({ mode })}
                   >
-                    {MODE_LABELS[mode]}
+                    {mode === "find-letter" && isMixed ? "Find the Key" : isNumbers && mode === "find-letter" ? "Find the Number" : MODE_LABELS[mode]}
                   </button>
                 ))}
               </div>
             </section>
 
-            <section className="parent-settings__section">
+            {!isNumbers && <section className="parent-settings__section">
               <h3>Letter case</h3>
-              <div className="parent-settings__pills">
+              <div className="parent-settings__pills" role="group" aria-label="Choose letter case">
                 {(Object.keys(CASE_LABELS) as LetterCaseMode[]).map((caseMode) => (
                   <button
                     key={caseMode}
@@ -147,35 +168,30 @@ export function ParentSettings({
                   </button>
                 ))}
               </div>
-            </section>
+            </section>}
 
-            <section className="parent-settings__section">
-              <h3>Letter range</h3>
-              <div className="parent-settings__pills">
-                {LETTER_RANGES.map((range) => (
-                  <button
-                    key={range.label}
-                    type="button"
-                    className="parent-settings__pill"
-                    onClick={() => onChange({ enabledLetters: range.letters })}
-                  >
-                    {range.label}
-                  </button>
-                ))}
-              </div>
-              <div className="parent-settings__letter-grid">
-                {ALL_LETTER_KEYS.map((letter) => (
-                  <label key={letter} className="parent-settings__letter-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={settings.enabledLetters.includes(letter)}
-                      onChange={() => toggleLetter(letter)}
-                    />
-                    {letter}
-                  </label>
-                ))}
-              </div>
-            </section>
+            {rangeGroups.map((group) => (
+              <section key={group.field} className="parent-settings__section" aria-label={group.title}>
+                <h3>{group.title}</h3>
+                <div className="parent-settings__pills">
+                  {group.ranges.map((range) => (
+                    <button key={range.label} type="button" className="parent-settings__pill"
+                      onClick={() => onChange({ [group.field]: range.letters })}>
+                      {range.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="parent-settings__letter-grid">
+                  {group.keys.map((key) => (
+                    <label key={key} className="parent-settings__letter-checkbox">
+                      <input type="checkbox" checked={settings[group.field].includes(key)}
+                        onChange={() => toggleKey(key, group.field)} />
+                      {key}
+                    </label>
+                  ))}
+                </div>
+              </section>
+            ))}
 
             <section className="parent-settings__section">
               <h3>Questions per round</h3>
@@ -204,7 +220,7 @@ export function ParentSettings({
                 />
               </label>
               <label className="parent-settings__toggle-row">
-                <span>Auto-advance to next letter</span>
+                <span>Auto-advance to next {isMixed ? "key" : isNumbers ? "number" : "letter"}</span>
                 <input
                   type="checkbox"
                   checked={settings.autoNext}
@@ -261,9 +277,9 @@ export function ParentSettings({
             <section className="parent-settings__section">
               <h3>Learning record</h3>
               {mostMissed.length > 0 && (
-                <p className="parent-settings__missed">Most practiced: {mostMissed.join(", ")}</p>
+                <p className="parent-settings__missed">Needs more practice: {mostMissed.join(", ")}</p>
               )}
-              <ProgressStars variant="grid" progress={progress} />
+              <ProgressStars variant="grid" progress={progress} contentType={settings.contentType} />
               <button type="button" className="parent-settings__reset" onClick={handleResetProgress}>
                 Clear learning record
               </button>

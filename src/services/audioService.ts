@@ -29,7 +29,7 @@ class AudioService {
   private volume = 0.8;
   private speaking = false;
   private currentClip: HTMLAudioElement | undefined;
-  private playToken = 0;
+  private finishCurrentClip: (() => void) | undefined;
   private missingClipWarnings = new Set<string>();
 
   setVolume(volume: number): void {
@@ -69,19 +69,13 @@ class AudioService {
   }
 
   cancelSpeech(): void {
-    this.playToken += 1;
-    if (this.currentClip) {
-      this.currentClip.onended = null;
-      this.currentClip.onerror = null;
-      this.currentClip.pause();
-      this.currentClip = undefined;
-    }
+    this.finishCurrentClip?.();
     this.speaking = false;
     this.restoreMusicGain();
   }
 
   playLetterSound(letter: string, accent: AccentId): Promise<void> {
-    return this.playClip(`letter-${letter.toUpperCase()}`, accent);
+    return this.playClip(/^[0-9]$/.test(letter) ? `number-${letter}` : `letter-${letter.toUpperCase()}`, accent);
   }
 
   playPhonicsSound(letter: string, accent: AccentId): Promise<void> {
@@ -101,7 +95,7 @@ class AudioService {
   }
 
   playPromptSound(letter: string, accent: AccentId): Promise<void> {
-    return this.playClip(`prompt-${letter.toUpperCase()}`, accent);
+    return this.playClip(/^[0-9]$/.test(letter) ? `number-${letter}` : `prompt-${letter.toUpperCase()}`, accent);
   }
 
   playPairSound(letter: string, accent: AccentId): Promise<void> {
@@ -117,22 +111,20 @@ class AudioService {
     if (typeof window === "undefined") {
       return Promise.resolve();
     }
-    this.playToken += 1;
-    const token = this.playToken;
-
-    if (this.currentClip) {
-      this.currentClip.onended = null;
-      this.currentClip.onerror = null;
-      this.currentClip.pause();
-      this.currentClip = undefined;
-    }
+    this.cancelSpeech();
 
     return new Promise((resolve) => {
+      const audio = new Audio(`${AUDIO_BASE}/${accent}/${clipName}.m4a`);
       let settled = false;
       const finish = (): void => {
         if (settled) return;
         settled = true;
-        if (token === this.playToken) {
+        audio.onended = null;
+        audio.onerror = null;
+        audio.pause();
+        if (this.currentClip === audio) {
+          this.currentClip = undefined;
+          this.finishCurrentClip = undefined;
           this.speaking = false;
           this.restoreMusicGain();
         }
@@ -140,13 +132,14 @@ class AudioService {
       };
 
       const handleMissingClip = (): void => {
+        if (settled) return;
         this.warnMissingClip(`${accent}/${clipName}.m4a`);
         finish();
       };
 
-      const audio = new Audio(`${AUDIO_BASE}/${accent}/${clipName}.m4a`);
       audio.volume = this.volume;
       this.currentClip = audio;
+      this.finishCurrentClip = finish;
       this.speaking = true;
       this.duckMusicGain();
 
@@ -171,12 +164,9 @@ class AudioService {
       return;
     }
     const now = ctx.currentTime;
-    const patterns: Record<EffectType, Array<[number, number]>> = {
-      correct: [
-        [523.25, 0.1],
-        [659.25, 0.12],
-      ],
-      incorrect: [[220, 0.18]],
+    const patterns: Record<EffectType, Array<[number, number, number?]>> = {
+      correct: [[880, 0.25]],
+      incorrect: [[196, 0.16, 0.12]],
       click: [[440, 0.05]],
       celebration: [
         [523.25, 0.08],
@@ -186,19 +176,19 @@ class AudioService {
     };
     const notes = patterns[type];
     let startAt = now;
-    for (const [freq, duration] of notes) {
-      this.playTone(ctx, freq, startAt, duration);
+    for (const [freq, duration, peakGain] of notes) {
+      this.playTone(ctx, freq, startAt, duration, peakGain);
       startAt += duration;
     }
   }
 
-  private playTone(ctx: AudioContext, frequency: number, startAt: number, duration: number): void {
+  private playTone(ctx: AudioContext, frequency: number, startAt: number, duration: number, peakGain = 0.25): void {
     const oscillator = ctx.createOscillator();
     const gain = ctx.createGain();
     oscillator.type = "sine";
     oscillator.frequency.value = frequency;
     gain.gain.setValueAtTime(0, startAt);
-    gain.gain.linearRampToValueAtTime(0.25 * this.volume, startAt + 0.02);
+    gain.gain.linearRampToValueAtTime(peakGain * this.volume, startAt + 0.02);
     gain.gain.linearRampToValueAtTime(0, startAt + duration);
     oscillator.connect(gain);
     gain.connect(ctx.destination);

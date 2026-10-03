@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "audio:volcengine": "node scripts/generate-volcengine-audio.mjs",
+    "audio:numbers": "node scripts/generate-number-audio.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",

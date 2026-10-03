@@ -110,6 +110,29 @@
   width: 100%;
 }
 
+.welcome-page__choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.welcome-page__choices button {
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  font-weight: 700;
+  font-size: var(--text-base);
+  border: 3px solid transparent;
+}
+
+.welcome-page__choices button[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-surface-soft);
+}
+
 /* Theme picker */
 .welcome-page__themes {
   display: flex;

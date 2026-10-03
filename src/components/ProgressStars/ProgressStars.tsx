@@ -1,16 +1,18 @@
-import { LETTERS } from "../../data/letters";
+import { ALL_LETTER_KEYS } from "../../data/letters";
 import { getMasteryLevel } from "../../services/progressService";
-import type { ProgressRecord } from "../../types/game";
+import { ALL_NUMBER_KEYS } from "../../data/numbers";
+import type { LearningContentType, ProgressRecord } from "../../types/game";
 import "./ProgressStars.css";
 
 interface ProgressHeaderProps {
   variant: "header";
-  streak: number;
+  earnedStars: number;
 }
 
 interface ProgressGridProps {
   variant: "grid";
   progress: ProgressRecord;
+  contentType?: LearningContentType;
 }
 
 type ProgressStarsProps = ProgressHeaderProps | ProgressGridProps;
@@ -31,30 +33,30 @@ const MASTERY_ICON: Record<"new" | "learning" | "familiar", string> = {
 
 export function ProgressStars(props: ProgressStarsProps) {
   if (props.variant === "header") {
-    const filled = Math.min(props.streak, HEADER_MAX_STARS);
+    const filled = Math.min(props.earnedStars, HEADER_MAX_STARS);
     return (
-      <div className="progress-stars-header" aria-label={`Current streak: ${props.streak}`}>
+      <div className="progress-stars-header" aria-label={`Stars earned: ${props.earnedStars}`}>
         {Array.from({ length: HEADER_MAX_STARS }, (_, i) => (
           <span key={i} aria-hidden="true">
             {i < filled ? "⭐" : "☆"}
           </span>
         ))}
-        {props.streak > HEADER_MAX_STARS && <span className="progress-stars-header__count">×{props.streak}</span>}
+        {props.earnedStars > HEADER_MAX_STARS && <span className="progress-stars-header__count">×{props.earnedStars}</span>}
       </div>
     );
   }
 
   return (
     <div className="progress-stars-grid">
-      {LETTERS.map((letter) => {
-        const mastery = getMasteryLevel(props.progress[letter.uppercase]);
+      {(props.contentType === "mixed" ? [...ALL_LETTER_KEYS, ...ALL_NUMBER_KEYS] : props.contentType === "numbers" ? ALL_NUMBER_KEYS : ALL_LETTER_KEYS).map((letter) => {
+        const mastery = getMasteryLevel(props.progress[letter]);
         return (
           <div
-            key={letter.uppercase}
+            key={letter}
             className={`progress-stars-grid__cell progress-stars-grid__cell--${mastery}`}
             title={MASTERY_LABEL[mastery]}
           >
-            <span className="progress-stars-grid__letter">{letter.uppercase}</span>
+            <span className="progress-stars-grid__letter">{letter}</span>
             <span aria-hidden="true">{MASTERY_ICON[mastery]}</span>
           </div>
         );

@@ -20,7 +20,7 @@ export function SoundControls({ settings, onChange, onTestSound }: SoundControls
       </label>
 
       <label className="sound-controls__row">
-        <span>Letter names</span>
+        <span>{settings.contentType === "mixed" ? "Letter & number names" : settings.contentType === "numbers" ? "Number names" : "Letter names"}</span>
         <input
           type="checkbox"
           checked={settings.letterSpeechEnabled}
@@ -29,15 +29,15 @@ export function SoundControls({ settings, onChange, onTestSound }: SoundControls
         />
       </label>
 
-      <label className="sound-controls__row">
-        <span>Word names</span>
+      {settings.contentType !== "numbers" && <label className="sound-controls__row">
+        <span>{settings.contentType === "mixed" ? "Word names (letters only)" : "Word names"}</span>
         <input
           type="checkbox"
           checked={settings.wordSpeechEnabled}
           disabled={!settings.soundEnabled}
           onChange={(event) => onChange({ wordSpeechEnabled: event.target.checked })}
         />
-      </label>
+      </label>}
 
       <label className="sound-controls__row">
         <span>Sound effects</span>

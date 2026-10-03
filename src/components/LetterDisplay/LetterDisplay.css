@@ -21,13 +21,41 @@
   user-select: none;
 }
 
+.letter-display:focus-visible {
+  outline: 4px solid var(--color-accent);
+  outline-offset: 6px;
+}
+
 .letter-display--correct {
   border-color: var(--color-success);
   box-shadow: 0 0 0 12px rgba(67, 199, 140, 0.22), var(--shadow-pop);
+  animation: letter-answer-bounce 450ms ease-out;
 }
 
-.letter-display--incorrect {
-  border-color: var(--color-error);
+.letter-display--incorrect,
+.letter-display--placeholder.letter-display--incorrect {
+  border-color: #e9af6b;
+  animation: letter-retry-shake 380ms ease-out;
+}
+
+@keyframes letter-answer-bounce {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(1.08); }
+  75% { transform: scale(0.98); }
+}
+
+@keyframes letter-retry-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  65% { transform: translateX(5px); }
+}
+
+.letter-display--still {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letter-display { animation: none; }
 }
 
 .letter-display--placeholder {

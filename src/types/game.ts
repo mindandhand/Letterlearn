@@ -1,5 +1,7 @@
 export type GameMode = "find-letter" | "free-play" | "listen-and-find" | "case-match";
 
+export type LearningContentType = "letters" | "numbers" | "mixed";
+
 export type LetterCaseMode = "uppercase" | "lowercase" | "mixed";
 
 export type ThemeId = "rainbow" | "space" | "forest" | "ocean";
@@ -9,9 +11,11 @@ export type AccentId = "us" | "gb";
 export type QuestionCount = 5 | 10 | 15 | "infinite";
 
 export interface GameSettings {
+  contentType: LearningContentType;
   mode: GameMode;
   caseMode: LetterCaseMode;
   enabledLetters: string[];
+  enabledNumbers: string[];
   soundEnabled: boolean;
   letterSpeechEnabled: boolean;
   wordSpeechEnabled: boolean;

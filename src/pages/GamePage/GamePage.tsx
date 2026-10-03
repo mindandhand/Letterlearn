@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getLetterData } from "../../data/letters";
+import { getItemContentType, getLearningData } from "../../data/learningContent";
 import { THEME_MAP } from "../../data/themes";
 import { useGameSession } from "../../hooks/useGameSession";
 import { useKeyboardInput } from "../../hooks/useKeyboardInput";
@@ -10,6 +10,8 @@ import { WordCard } from "../../components/WordCard/WordCard";
 import { CelebrationLayer } from "../../components/CelebrationLayer/CelebrationLayer";
 import { ProgressStars } from "../../components/ProgressStars/ProgressStars";
 import { ParentSettings } from "../../components/ParentSettings/ParentSettings";
+import { AnswerFeedback } from "../../components/AnswerFeedback/AnswerFeedback";
+import { KeyboardHint } from "../../components/KeyboardHint/KeyboardHint";
 import "./GamePage.css";
 
 interface GamePageProps {
@@ -33,18 +35,29 @@ const ANSWER_PHASES = new Set(["correctFeedback", "showingWord", "celebration", 
 export function GamePage({ settings, onChangeSettings, progress, recordAttempt, resetProgress, onBack }: GamePageProps) {
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const speech = useSpeech(settings);
-  const session = useGameSession(settings, { progress, recordAttempt });
+  const session = useGameSession(settings, { progress, recordAttempt }, isSettingsOpen);
 
   useKeyboardInput({
+    contentType: settings.contentType,
     enabled: !isSettingsOpen && !session.isSessionComplete,
     onLetterPress: session.submitLetter,
   });
 
   const theme = THEME_MAP[settings.theme];
-  const wordData = getLetterData(session.currentLetter);
+  const wordData = getLearningData(session.currentLetter, settings.contentType);
+  const isNumbers = settings.contentType === "numbers";
+  const isMixed = settings.contentType === "mixed";
+  const targetContentType = getItemContentType(session.currentLetter);
+  const itemName = isMixed ? "key" : isNumbers ? "number" : "letter";
+  const isCaseMatch = settings.mode === "case-match" && settings.contentType === "letters";
+  const modeLabel = settings.mode === "find-letter" || (settings.mode === "case-match" && !isCaseMatch)
+    ? isMixed ? "Find the Key" : isNumbers ? "Find the Number" : "Find the Letter"
+    : MODE_LABELS[settings.mode];
   const isListenMode = settings.mode === "listen-and-find";
   const isAnswerPhase = ANSWER_PHASES.has(session.phase);
-  const letterToShow = isListenMode && !isAnswerPhase ? "" : session.currentLetter;
+  const isGuidedMode = settings.mode !== "free-play";
+  const canHearLetter = settings.soundEnabled && settings.letterSpeechEnabled && settings.volume > 0;
+  const letterToShow = isListenMode && !isAnswerPhase && canHearLetter ? "" : session.currentLetter;
 
   const ariaMessage = useMemo(() => {
     if (session.phase === "correctFeedback") return "Correct!";
@@ -62,7 +75,7 @@ export function GamePage({ settings, onChangeSettings, progress, recordAttempt, 
       <div className="game-page game-page--complete">
         <div className="game-page__complete-card">
           <h2>🎉 Great practice!</h2>
-          <p>You practiced {session.questionsAnswered} letters.</p>
+          <p>You practiced {session.questionsAnswered} {isMixed ? "keys" : isNumbers ? "numbers" : "letters"}.</p>
           <div className="game-page__complete-actions">
             <button type="button" onClick={session.restart}>
               Play again
@@ -82,8 +95,8 @@ export function GamePage({ settings, onChangeSettings, progress, recordAttempt, 
         <button type="button" className="game-page__icon-button" onClick={onBack} aria-label="Back to modes">
           ←
         </button>
-        <span className="game-page__mode-label">{MODE_LABELS[settings.mode]}</span>
-        <ProgressStars variant="header" streak={session.streak} />
+        <span className="game-page__mode-label">{modeLabel}</span>
+        <ProgressStars variant="header" earnedStars={session.questionsAnswered} />
         <button
           type="button"
           className="game-page__icon-button"
@@ -102,20 +115,33 @@ export function GamePage({ settings, onChangeSettings, progress, recordAttempt, 
         </button>
       </header>
 
-      <main className="game-page__main">
+      <main className={`game-page__main${isGuidedMode ? " game-page__main--guided" : ""}`}>
         {settings.mode === "free-play" && !session.currentLetter && (
-          <p className="game-page__prompt">Press any letter!</p>
+          <p className="game-page__prompt">Press any {isMixed ? "letter or number" : itemName}!</p>
         )}
-        {isListenMode && !isAnswerPhase && <p className="game-page__prompt">Listen, then press the letter</p>}
+        {isListenMode && !isAnswerPhase && (
+          <p className="game-page__prompt">
+            {canHearLetter ? `Listen, then press the ${itemName}` : `Sound is off. Look at the ${itemName} and press its key.`}
+          </p>
+        )}
 
         <LetterDisplay
           letter={letterToShow}
+          contentType={letterToShow ? targetContentType : settings.contentType}
           isUppercase={session.displayUppercase}
           phase={session.phase}
           reducedMotion={settings.reducedMotion}
+          onReplay={session.replay}
+          disabled={isSettingsOpen}
         />
 
-        {settings.mode === "case-match" && isAnswerPhase && session.currentLetter && (
+        {isGuidedMode && <AnswerFeedback correct={isAnswerPhase} retry={session.phase === "incorrectFeedback"} />}
+
+        {isGuidedMode && session.mistakesThisQuestion >= 2 && !isAnswerPhase && !isSettingsOpen && (
+          <KeyboardHint target={session.currentLetter} contentType={targetContentType} reducedMotion={settings.reducedMotion} />
+        )}
+
+        {isCaseMatch && isAnswerPhase && session.currentLetter && (
           <div className="game-page__case-pair" aria-hidden="true">
             <span>{session.currentLetter}</span>
             <span>{session.currentLetter.toLowerCase()}</span>
@@ -123,27 +149,26 @@ export function GamePage({ settings, onChangeSettings, progress, recordAttempt, 
         )}
 
         {isListenMode && (
-          <button type="button" className="game-page__replay" onClick={session.replay}>
+          <button type="button" className="game-page__replay" onClick={session.replay} disabled={isSettingsOpen}>
             🔊 Listen again
           </button>
         )}
 
-        {session.phase === "celebration" && session.encouragement && (
+        {!isGuidedMode && session.phase === "celebration" && session.encouragement && (
           <p className="game-page__encouragement">{session.encouragement}</p>
         )}
 
-        {session.hint && session.phase === "incorrectFeedback" && (
-          <p className="game-page__hint">{session.hint}</p>
-        )}
-
-        {settings.mode !== "case-match" && (
+        {!isCaseMatch && (
           <WordCard
             word={wordData?.word}
+            quantity={targetContentType === "numbers" && session.currentLetter ? Number(session.currentLetter) : undefined}
             emoji={wordData?.emoji}
-            visible={isAnswerPhase}
+            visible={isAnswerPhase || (settings.mode === "free-play" && Boolean(session.currentLetter))}
             showWord={settings.showWords}
             showEmoji={settings.showEmoji}
             reducedMotion={settings.reducedMotion}
+            onReplay={session.replayWord}
+            disabled={isSettingsOpen}
           />
         )}
 
@@ -158,12 +183,12 @@ export function GamePage({ settings, onChangeSettings, progress, recordAttempt, 
         </div>
       </main>
 
-      <CelebrationLayer
+      {!isGuidedMode && <CelebrationLayer
         animation={session.celebrationAnimation}
         themeCelebrationIcon={theme.celebrationIcon}
         streak={session.streak}
         reducedMotion={settings.reducedMotion}
-      />
+      />}
 
       <ParentSettings
         isOpen={isSettingsOpen}

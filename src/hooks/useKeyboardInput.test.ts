@@ -53,6 +53,7 @@ describe("useKeyboardInput", () => {
   });
 
   it("recognizes the letter the same way regardless of Caps Lock (via event.key casing)", () => {
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
     const onLetterPress = vi.fn();
     renderHook(() => useKeyboardInput({ enabled: true, onLetterPress }));
 
@@ -60,9 +61,24 @@ describe("useKeyboardInput", () => {
     // physical key pressed is the same. Lowercase input should resolve
     // identically via toLowerCase() normalization.
     dispatchKey({ key: "B" });
+    clock.mockReturnValue(1050);
     dispatchKey({ key: "b" });
 
     expect(onLetterPress).toHaveBeenNthCalledWith(1, "B");
+    expect(onLetterPress).toHaveBeenNthCalledWith(2, "B");
+  });
+
+  it("debounces rapid presses and accepts the next press after the cooldown", () => {
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
+    const onLetterPress = vi.fn();
+    renderHook(() => useKeyboardInput({ enabled: true, onLetterPress }));
+
+    dispatchKey({ key: "a" });
+    clock.mockReturnValue(1020);
+    dispatchKey({ key: "b" });
+    expect(onLetterPress).toHaveBeenCalledTimes(1);
+    clock.mockReturnValue(1050);
+    dispatchKey({ key: "b" });
     expect(onLetterPress).toHaveBeenNthCalledWith(2, "B");
   });
 
@@ -101,4 +117,69 @@ describe("useKeyboardInput", () => {
 
     expect(callsAfterRerender).toBe(callsAfterMount);
   });
+});
+
+
+describe("number keyboard input", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("accepts zero and a NumLock-enabled numpad digit using event.key", () => {
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
+    const onLetterPress = vi.fn();
+    renderHook(() => useKeyboardInput({ enabled: true, contentType: "numbers", onLetterPress }));
+    dispatchKey({ key: "0", code: "Digit0" });
+    clock.mockReturnValue(1100);
+    dispatchKey({ key: "7", code: "Numpad7" });
+    expect(onLetterPress.mock.calls).toEqual([["0"], ["7"]]);
+  });
+
+  it("ignores letters, symbols, numpad navigation, repeats and modified digits without blocking the next digit", () => {
+    const onLetterPress = vi.fn();
+    renderHook(() => useKeyboardInput({ enabled: true, contentType: "numbers", onLetterPress }));
+    dispatchKey({ key: "a" });
+    dispatchKey({ key: "!", code: "Digit1" });
+    dispatchKey({ key: "Home", code: "Numpad7" });
+    dispatchKey({ key: "2", repeat: true });
+    dispatchKey({ key: "2", ctrlKey: true });
+    dispatchKey({ key: "2", altKey: true });
+    dispatchKey({ key: "2", metaKey: true });
+    dispatchKey({ key: "2" });
+    expect(onLetterPress.mock.calls).toEqual([["2"]]);
+  });
+
+  it("updates accepted keys when content changes", () => {
+    const onLetterPress = vi.fn();
+    const { rerender } = renderHook(({ numbers }) => useKeyboardInput({ enabled: true, contentType: numbers ? "numbers" : "letters", onLetterPress }), { initialProps: { numbers: false } });
+    dispatchKey({ key: "0" });
+    rerender({ numbers: true });
+    dispatchKey({ key: "0" });
+    expect(onLetterPress.mock.calls).toEqual([["0"]]);
+  });
+});
+
+
+it("accepts a shifted numeric character while rejecting shifted symbols", () => {
+  const onLetterPress = vi.fn();
+  renderHook(() => useKeyboardInput({ enabled: true, contentType: "numbers", onLetterPress }));
+  dispatchKey({ key: "!", code: "Digit1", shiftKey: true });
+  dispatchKey({ key: "0", code: "Digit0", shiftKey: true });
+  expect(onLetterPress.mock.calls).toEqual([["0"]]);
+});
+
+
+it("accepts letters and literal zero in mixed mode while ignoring modifiers and symbols", () => {
+  const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
+  try {
+    const onLetterPress = vi.fn();
+    renderHook(() => useKeyboardInput({ enabled: true, contentType: "mixed", onLetterPress }));
+    dispatchKey({ key: "a", ctrlKey: true });
+    dispatchKey({ key: "0", altKey: true });
+    dispatchKey({ key: "a", metaKey: true });
+    dispatchKey({ key: "!", shiftKey: true });
+    dispatchKey({ key: "0", repeat: true });
+    dispatchKey({ key: "a" });
+    clock.mockReturnValue(1100);
+    dispatchKey({ key: "0", code: "Numpad0" });
+    expect(onLetterPress.mock.calls).toEqual([["A"], ["0"]]);
+  } finally { clock.mockRestore(); }
 });
