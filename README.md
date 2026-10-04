@@ -51,7 +51,7 @@ npm run test:watch  # 监听模式
 
 数字支持自由探索、找数字、听音找键，不提供大小写匹配。按 `0`–`9`（含 NumLock 开启的小键盘）显示数字、英文名称和对应数量的圆点，`0` 显示空点阵。每次只读一次数字名称，点击数字或单词卡可重听。
 
-**Mixed** 支持自由探索、找键（Find the Key）和听音找键，在同一轮练习字母和数字。随机出题交替选择两类内容，并在每类内部保留错题优先；顺序出题按所选范围交错排列（如 `A、0、B、1`，某类用完后继续另一类）。大小写只影响字母；字母播放字母名＋单词，数字只读一次。家长设置中可同时调整两类范围，混合学习沿用各项已有进度。
+**Mixed** 支持自由探索、找键（Find the Key）和听音找键，在同一轮练习字母和数字。随机出题将两类内容放入同一个洗牌池，每个所选内容出现一次后重新洗牌，跨轮避免连续重复（只选一个内容时除外）；顺序出题按所选范围交错排列（如 `A、0、B、1`，某类用完后继续另一类）。大小写只影响字母；字母播放字母名＋单词，数字只读一次。家长设置中可同时调整两类范围，混合学习沿用各项已有进度。
 
 家长设置可选择 `0–9`、`0–5`、`6–9` 或自定义数字范围。字母和数字的范围分别保存，学习记录按当前内容展示；旧版设置和记录自动兼容。自由探索允许当前类别的所有键，练习范围用于出题模式。
 
@@ -101,7 +101,7 @@ src/
   services/     audioService（音频播放）, progressService（localStorage 读写）
   data/         letters, themes, encouragements, defaultSettings
   types/        game.ts（GameSettings, LetterProgress, QuestionPhase, ...）
-  utils/        random, wait, letterSelection（带权重的字母选择器）
+  utils/        random, wait, letterSelection（不放回的随机选择器）
   styles/       tokens.css（设计 token）, global.css
 ```
 

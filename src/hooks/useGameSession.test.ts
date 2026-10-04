@@ -491,7 +491,7 @@ describe("mixed learning sessions", () => {
     expect(result.current.currentLetter).toBe("D");
   });
 
-  it("alternates random categories while weighting mistakes within each configured category", async () => {
+  it("draws every mixed key once per cycle regardless of mistake history", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0.6).mockReturnValueOnce(0.4);
     const progress = makeProgressApi();
     progress.progress.B = { attempts: 1, mistakes: 1, correct: 0, currentStreak: 0, bestStreak: 0 };
@@ -504,12 +504,12 @@ describe("mixed learning sessions", () => {
       await act(async () => result.current.submitLetter(result.current.currentLetter));
       await act(async () => vi.advanceTimersByTimeAsync(2000));
     }
-    expect(targets).toEqual(["B", "0", "B", "0"]);
-    expect(progress.recordAttempt.mock.calls).toEqual([["B", true], ["0", true], ["B", true], ["0", true]]);
+    expect(new Set(targets)).toEqual(new Set(["B", "D", "0", "2"]));
+    expect(progress.recordAttempt.mock.calls).toEqual(targets.map((key) => [key, true]));
   });
 
   it("can start the random mix with a number", async () => {
-    vi.spyOn(Math, "random").mockReturnValue(0.8);
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
     const { result } = renderHook(() => useGameSession({ ...mixed, randomOrder: true, enabledNumbers: ["0"], caseMode: "uppercase" }, makeProgressApi()));
     await act(async () => {});
     expect(result.current.currentLetter).toBe("0");

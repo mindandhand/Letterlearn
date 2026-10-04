@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getLearningData, getEnabledKeys, getItemContentType } from "../data/learningContent";
 import { CELEBRATION_ANIMATIONS, ENCOURAGEMENTS, GENTLE_HINTS } from "../data/encouragements";
 import type { CelebrationAnimationId } from "../data/encouragements";
-import { pickIsUppercase, pickNextLetter } from "../utils/letterSelection";
+import { createLetterPicker, pickIsUppercase } from "../utils/letterSelection";
 import { pickRandom } from "../utils/random";
 import type { GameSettings, ProgressRecord, QuestionPhase } from "../types/game";
 import { useSpeech } from "./useSpeech";
@@ -59,6 +59,7 @@ export function useGameSession(settings: GameSettings, progressApi: ProgressApi,
   pausedRef.current = paused;
   const pendingTimers = useRef(new Map<ReturnType<typeof setTimeout>, () => void>());
   const cycleIndexRef = useRef(0);
+  const randomPickerRef = useRef(createLetterPicker());
   const hasScoredRef = useRef(false);
   const generationRef = useRef(0);
   const autoNextTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -123,16 +124,8 @@ export function useGameSession(settings: GameSettings, progressApi: ProgressApi,
 
     const current = settingsRef.current;
     const enabledLetters = getEnabledKeys(current);
-    let randomPool = enabledLetters;
-    if (current.randomOrder && current.contentType === "mixed") {
-      const previous = lastLetterRef.current;
-      const nextCategory = previous === null
-        ? (Math.random() < 0.5 ? "letters" : "numbers")
-        : (getItemContentType(previous) === "letters" ? "numbers" : "letters");
-      randomPool = enabledLetters.filter((key) => getItemContentType(key) === nextCategory);
-    }
     const nextLetter = current.randomOrder
-      ? pickNextLetter(randomPool, progressRef.current.progress, lastLetterRef.current)
+      ? randomPickerRef.current(enabledLetters, lastLetterRef.current)
       : enabledLetters[cycleIndexRef.current % enabledLetters.length];
     if (!current.randomOrder) {
       cycleIndexRef.current += 1;
@@ -303,6 +296,7 @@ export function useGameSession(settings: GameSettings, progressApi: ProgressApi,
     lastIncorrectTimeRef.current = -Infinity;
     lastLetterRef.current = null;
     cycleIndexRef.current = 0;
+    randomPickerRef.current = createLetterPicker();
     hasScoredRef.current = false;
     setCurrentLetter("");
     setStreak(0);

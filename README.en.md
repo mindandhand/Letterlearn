@@ -49,8 +49,9 @@ for what's covered.
   to hear its name once and see its English word and quantity (zero has an
   empty dot tray). Click the digit or word card to hear it again.
 - **Mixed learning** combines letters and digits in Free Play, Find the Key,
-  and Listen and Find. Random questions alternate categories and keep weighted
-  selection within each; sequential questions interleave the configured ranges
+  and Listen and Find. Random questions draw from one shuffled pool, covering each selected key once
+  before refilling and avoiding adjacent repeats when more than one key is enabled;
+  sequential questions interleave the configured ranges
   (A, 0, B, 1, then any remaining items). Letter case only affects letters.
   Letter playback includes the word; digits are spoken once. Both ranges can
   be edited together in parent settings and reuse their existing progress.
@@ -159,7 +160,7 @@ src/
   services/     audioService (playback), progressService (localStorage I/O)
   data/         letters, themes, encouragements, defaultSettings
   types/        game.ts (GameSettings, LetterProgress, QuestionPhase, ...)
-  utils/        random, wait, letterSelection (weighted picker)
+  utils/        random, wait, letterSelection (shuffle picker)
   styles/       tokens.css (design tokens), global.css
 ```
 

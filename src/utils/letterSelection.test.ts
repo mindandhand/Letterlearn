@@ -1,61 +1,65 @@
-import { describe, expect, it, vi } from "vitest";
-import { pickIsUppercase, pickNextLetter } from "./letterSelection";
-import type { ProgressRecord } from "../types/game";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createLetterPicker, pickIsUppercase } from "./letterSelection";
 
-describe("pickNextLetter", () => {
-  it("never repeats the same letter twice in a row when multiple letters are enabled", () => {
-    const letters = ["A", "B", "C"];
-    let lastLetter: string | null = null;
-    for (let i = 0; i < 200; i += 1) {
-      const next = pickNextLetter(letters, {}, lastLetter);
-      expect(next).not.toBe(lastLetter);
-      lastLetter = next;
+afterEach(() => vi.restoreAllMocks());
+
+describe("shuffled letter selection", () => {
+  it("covers every selected key exactly once per cycle", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.6);
+    const pick = createLetterPicker();
+    const keys = ["A", "B", "C", "0", "1"];
+    let last: string | null = null;
+    for (let cycle = 0; cycle < 4; cycle += 1) {
+      const drawn: string[] = [];
+      for (let i = 0; i < keys.length; i += 1) {
+        const next = pick(keys, last);
+        expect(next).not.toBe(last);
+        drawn.push(next);
+        last = next;
+      }
+      expect(drawn.slice().sort()).toEqual(keys.slice().sort());
     }
+    expect(keys).toEqual(["A", "B", "C", "0", "1"]);
   });
 
-  it("returns the only letter immediately without looping when just one letter is enabled", () => {
-    const result = pickNextLetter(["A"], {}, "A");
-    expect(result).toBe("A");
+  it("avoids repeating the previous cycle's final key", () => {
+    const random = vi.spyOn(Math, "random").mockReturnValue(0);
+    const pick = createLetterPicker();
+    expect(pick(["A", "B", "C"], null)).toBe("A");
+    expect(pick(["A", "B", "C"], "A")).toBe("B");
+    expect(pick(["A", "B", "C"], "B")).toBe("C");
+    random.mockReturnValue(0.999);
+    expect(pick(["A", "B", "C"], "C")).not.toBe("C");
   });
 
-  it("throws when the enabled letter list is empty", () => {
-    expect(() => pickNextLetter([], {}, null)).toThrow();
+  it("rebuilds the pool when the range changes and keeps separate sessions independent", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const pick = createLetterPicker();
+    expect(pick(["A", "B", "C"], null)).toBe("A");
+    expect(pick(["X", "Y"], "A")).toBe("X");
+    expect(pick(["X", "Y"], "X")).toBe("Y");
+    expect(createLetterPicker()(["A", "B", "C"], null)).toBe("A");
   });
 
-  it("favors a letter the child recently missed over one they know well", () => {
-    const progress: ProgressRecord = {
-      A: { attempts: 5, correct: 1, mistakes: 4, currentStreak: 0, bestStreak: 1 },
-      B: { attempts: 5, correct: 5, mistakes: 0, currentStreak: 5, bestStreak: 5 },
-    };
-    // Roll values are consumed in pool order; pool excludes the last letter only
-    // when more than one candidate remains, so with lastLetter unset both letters
-    // are eligible and weights are A=4, B=0.5, total=4.5. A very small roll should
-    // land on A given its much larger share of the weighted range.
-    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.01);
-    try {
-      const next = pickNextLetter(["A", "B"], progress, null);
-      expect(next).toBe("A");
-    } finally {
-      randomSpy.mockRestore();
-    }
+  it("handles a single enabled key and rejects an empty range", () => {
+    const pick = createLetterPicker();
+    expect(pick(["A"], "A")).toBe("A");
+    expect(pick(["A"], "A")).toBe("A");
+    expect(() => pick([], null)).toThrow();
   });
 });
 
 describe("pickIsUppercase", () => {
-  it("always returns true for uppercase-only mode", () => {
+  it("respects fixed case modes", () => {
     expect(pickIsUppercase("uppercase")).toBe(true);
-  });
-
-  it("always returns false for lowercase-only mode", () => {
     expect(pickIsUppercase("lowercase")).toBe(false);
   });
 
   it("returns both outcomes for mixed mode depending on randomness", () => {
-    const randomSpy = vi.spyOn(Math, "random");
-    randomSpy.mockReturnValue(0.1);
+    const random = vi.spyOn(Math, "random");
+    random.mockReturnValue(0.1);
     expect(pickIsUppercase("mixed")).toBe(true);
-    randomSpy.mockReturnValue(0.9);
+    random.mockReturnValue(0.9);
     expect(pickIsUppercase("mixed")).toBe(false);
-    randomSpy.mockRestore();
   });
 });
