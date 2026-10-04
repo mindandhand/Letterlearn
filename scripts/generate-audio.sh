@@ -40,7 +40,10 @@ for a in "${!ACCENTS[@]}"; do
     # (e.g. `say "E"` and `say "Capital E"` render identically), but reads
     # an isolated lowercase letter as just the letter name. Use lowercase
     # here so the single-letter clip says "E", not "Capital E".
-    gen "$voice" "$lower" "$dir/letter-$letter.m4a"
+    letter_name="$lower"
+    # Spell out X's name to avoid treating the isolated letter as a symbol.
+    if [[ "$letter" == "X" ]]; then letter_name="ex"; fi
+    gen "$voice" "$letter_name" "$dir/letter-$letter.m4a"
     gen "$voice" "$phonics" "$dir/sound-$letter.m4a"
     gen "$voice" "$word" "$dir/word-$slug.m4a"
     gen "$voice" "Press $letter." "$dir/prompt-$letter.m4a"

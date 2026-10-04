@@ -54,6 +54,7 @@ function parseArgs(argv) {
     pairsOnly: false,
     soundsOnly: false,
     feedbackOnly: false,
+    lettersOnly: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -76,6 +77,8 @@ function parseArgs(argv) {
       options.soundsOnly = true;
     } else if (arg === "--feedback-only") {
       options.feedbackOnly = true;
+    } else if (arg === "--letters-only") {
+      options.lettersOnly = true;
     } else if (arg === "--help") {
       printHelp();
       process.exit(0);
@@ -105,6 +108,7 @@ Options:
   --pairs-only        Generate only pair clips for the selected accents
   --sounds-only       Generate only phonics clips for the selected accents
   --feedback-only     Generate only correct/hint feedback clips
+  --letters-only      Generate only standalone letter names
   --force             Overwrite existing files
   --dry-run           Print planned files without calling the API
   --help              Show this help
@@ -174,12 +178,18 @@ function getVoiceType(accent) {
   return voiceType;
 }
 
-function buildItems(onlyLetters, pairsOnly, soundsOnly, feedbackOnly) {
+function buildItems(onlyLetters, pairsOnly, soundsOnly, feedbackOnly, lettersOnly) {
   const selectedLetters = onlyLetters ? letters.filter(([letter]) => onlyLetters.has(letter)) : letters;
   const items = [];
 
   for (const [letter, word, slug, phonicsText] of selectedLetters) {
     const lower = letter.toLowerCase();
+    // Spell out X's name so TTS cannot interpret bare "x" as a symbol.
+    const letterName = letter === "X" ? "ex" : lower;
+    if (lettersOnly) {
+      items.push({ filename: `letter-${letter}`, text: letterName });
+      continue;
+    }
     if (feedbackOnly) {
       items.push({ filename: `correct-${letter}`, text: `Yes. ${letter} says ${phonicsText.split(" says ")[1]} ${letter} is for ${word}.` });
       items.push({ filename: `hint-${letter}`, text: `Try again. Find ${letter}.` });
@@ -192,13 +202,13 @@ function buildItems(onlyLetters, pairsOnly, soundsOnly, feedbackOnly) {
       items.push({ filename: `sound-${letter}`, text: phonicsText });
     }
     if (!pairsOnly && !soundsOnly) {
-      items.push({ filename: `letter-${letter}`, text: lower });
+      items.push({ filename: `letter-${letter}`, text: letterName });
       items.push({ filename: `word-${slug}`, text: word });
       items.push({ filename: `prompt-${letter}`, text: `Press ${letter}.` });
     }
   }
 
-  if (!pairsOnly && !soundsOnly && !feedbackOnly) {
+  if (!pairsOnly && !soundsOnly && !feedbackOnly && !lettersOnly) {
     items.push({ filename: "test-sound", text: "Hello! This is how I sound." });
   }
   return items;
@@ -322,7 +332,7 @@ async function main() {
   const options = parseArgs(process.argv.slice(2));
   await loadEnv();
   const config = getConfig();
-  const items = buildItems(options.onlyLetters, options.pairsOnly, options.soundsOnly, options.feedbackOnly);
+  const items = buildItems(options.onlyLetters, options.pairsOnly, options.soundsOnly, options.feedbackOnly, options.lettersOnly);
 
   for (const accent of options.accents) {
     getVoiceType(accent);
